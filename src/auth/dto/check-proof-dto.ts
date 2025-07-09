@@ -1,5 +1,5 @@
-import {CHAIN} from "@tonconnect/ui-react";
-import zod from "zod";
+import { CHAIN } from '@tonconnect/ui-react';
+import zod from 'zod';
 
 export const CheckProofRequest = zod.object({
   address: zod.string(),

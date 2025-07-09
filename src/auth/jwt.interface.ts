@@ -1,10 +1,10 @@
-import { CHAIN } from "@tonconnect/ui-react";
+import { CHAIN } from '@tonconnect/ui-react';
 
 export interface AuthToken {
-    address: string;
-    network: CHAIN;
+  address: string;
+  network: CHAIN;
 }
 
 export type PayloadToken = {
-    randomBytes: string;
+  randomBytes: string;
 };

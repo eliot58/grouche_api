@@ -1,28 +1,32 @@
-import { getSecureRandomBytes, sha256 } from "@ton/crypto";
-import { Address, Cell, contractAddress, loadStateInit } from "@ton/ton";
-import { Buffer } from "buffer";
-import { sign } from "tweetnacl";
-import { tryParsePublicKey } from "../wrappers/wallets-data";
-import { CheckProofRequestDto } from "../auth/dto/check-proof-dto";
+import { getSecureRandomBytes, sha256 } from '@ton/crypto';
+import { Address, Cell, contractAddress, loadStateInit } from '@ton/ton';
+import { Buffer } from 'buffer';
+import { sign } from 'tweetnacl';
+import { tryParsePublicKey } from '../wrappers/wallets-data';
+import { CheckProofRequestDto } from '../auth/dto/check-proof-dto';
 
 const tonProofPrefix = 'ton-proof-item-v2/';
 const tonConnectPrefix = 'ton-connect';
-const allowedDomains = [
-  'grouche.com'
-];
+const allowedDomains = ['grouche.com'];
 const validAuthTime = 15 * 60;
 
 export class TonProofService {
-
   public async generateRandomBytes(): Promise<Buffer> {
     return await getSecureRandomBytes(32);
   }
 
-  public async checkProof(payload: CheckProofRequestDto, getWalletPublicKey: (address: string) => Promise<Buffer | null>): Promise<boolean> {
+  public async checkProof(
+    payload: CheckProofRequestDto,
+    getWalletPublicKey: (address: string) => Promise<Buffer | null>,
+  ): Promise<boolean> {
     try {
-      const stateInit = loadStateInit(Cell.fromBase64(payload.proof.state_init).beginParse());
+      const stateInit = loadStateInit(
+        Cell.fromBase64(payload.proof.state_init).beginParse(),
+      );
 
-      let publicKey = tryParsePublicKey(stateInit) ?? await getWalletPublicKey(payload.address);
+      const publicKey =
+        tryParsePublicKey(stateInit) ??
+        (await getWalletPublicKey(payload.address));
       if (!publicKey) {
         return false;
       }
@@ -57,7 +61,7 @@ export class TonProofService {
         signature: Buffer.from(payload.proof.signature, 'base64'),
         payload: payload.proof.payload,
         stateInit: payload.proof.state_init,
-        timestamp: payload.proof.timestamp
+        timestamp: payload.proof.timestamp,
       };
 
       const wc = Buffer.alloc(4);
@@ -80,7 +84,7 @@ export class TonProofService {
       ]);
 
       const msgHash = Buffer.from(await sha256(msg));
-      
+
       const fullMsg = Buffer.concat([
         Buffer.from([0xff, 0xff]),
         Buffer.from(tonConnectPrefix),
@@ -94,5 +98,4 @@ export class TonProofService {
       return false;
     }
   }
-
 }

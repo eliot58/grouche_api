@@ -14,13 +14,13 @@ import { AdminModule } from './admin/admin.module';
   imports: [
     SentryModule.forRoot(),
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
     }),
     ScheduleModule.forRoot(),
     AuthModule,
     UserModule,
     CharityModule,
-    AdminModule
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
@@ -30,4 +30,4 @@ import { AdminModule } from './admin/admin.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

@@ -1,11 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyCorsOptions } from '@fastify/cors';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
-import "./instrument";
+import './instrument';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -13,25 +16,27 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({
       ignoreTrailingSlash: true,
-      bodyLimit: 200 * 1024 * 1024
+      bodyLimit: 200 * 1024 * 1024,
     }),
   );
 
   await app.register(fastifyMultipart, {
     limits: {
-      fileSize: 200 * 1024 * 1024, 
+      fileSize: 200 * 1024 * 1024,
     },
   });
 
   await app.register(fastifyStatic, {
     root: '/var/www/grouche/uploads',
     prefix: '/uploads/',
-});
+  });
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
 
   const corsOptions: FastifyCorsOptions = {
     origin: [
@@ -42,11 +47,11 @@ async function bootstrap() {
       'http://0.0.0.0:8000',
       'http://localhost:8000',
       'http://127.0.0.1:8000',
-      'null'
+      'null',
     ],
     credentials: true,
     methods: '*',
-    allowedHeaders: ['*', 'Authorization', 'Content-Type']
+    allowedHeaders: ['*', 'Authorization', 'Content-Type'],
   };
 
   app.enableCors(corsOptions);
