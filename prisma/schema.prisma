@@ -16,23 +16,63 @@ datasource db {
 
 model User {
   wallet    String  @id
-  points    Int     @default(0)
+  limit     BigInt  @default(0)
+
+  totalDonated         BigInt   @default(0)
+  initiativesCreated   Int      @default(0)
+  initiativesSupported Int      @default(0) 
+  votesParticipated    Int      @default(0) 
+
+  charities Charity[]
+  donations DonationHistory[] 
 }
 
-model Company {
-  id                Int      @id @default(autoincrement())
-  title             String
-  description       String
-  image             String
-  total_amount      BigInt
-  is_active         Boolean  @default(false)
-  created_at        DateTime @default(now())
-  expired_at        DateTime
+model Charity {
+  id                  Int            @id @default(autoincrement())
+  title               String
+  deadline            DateTime
+  donation_needed     BigInt
+  donation_collected  BigInt         @default(0)
+  donators_count      Int            @default(0)
+  images              Json
+  description         String
+  contact             String
+  address             String?
+  status              CharityStatus  @default(in_review)
+  created_at          DateTime       @default(now())
+
+  authorWallet        String
+  author              User           @relation(fields: [authorWallet], references: [wallet])
+
+  history             DonationHistory[] 
 }
+
+model DonationHistory {
+  id              Int       @id @default(autoincrement())
+  username        String
+  comment         String?
+  crypto_type     String
+  donation_amount BigInt
+  created_at      DateTime  @default(now())
+
+  userWallet      String
+  user            User      @relation(fields: [userWallet], references: [wallet])
+
+  charityId       Int
+  charity         Charity   @relation(fields: [charityId], references: [id])
+}
+
 
 model NftItems {
   index      Int     @id
   address    String  @unique
   content    String
   is_checked Boolean @default(false)
+  sender     String?
+}
+
+enum CharityStatus {
+  in_review
+  accepted
+  rejected
 }

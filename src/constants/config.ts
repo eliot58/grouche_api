@@ -1,5 +1,6 @@
-export const DOMAIN = "grouche.com";
-export const PAYLOAD_TTL = 3600;
-export const PROOF_TTL = 3600; 
-
-export const ACCESS_TOKEN_EXPIRE_MINUTES = '1d';
+export const tonProofPrefix = 'ton-proof-item-v2/';
+export const tonConnectPrefix = 'ton-connect';
+export const allowedDomains = [
+  'grouche.com'
+];
+export const validAuthTime = 15 * 60; 

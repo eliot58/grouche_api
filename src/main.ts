@@ -5,6 +5,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { FastifyCorsOptions } from '@fastify/cors';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
+import "./instrument";
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -15,7 +17,11 @@ async function bootstrap() {
     }),
   );
 
-  await app.register(fastifyMultipart);
+  await app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 200 * 1024 * 1024, 
+    },
+  });
 
   await app.register(fastifyStatic, {
     root: '/var/www/grouche/uploads',
@@ -44,6 +50,15 @@ async function bootstrap() {
   };
 
   app.enableCors(corsOptions);
+
+  const config = new DocumentBuilder()
+    .setTitle('Grouche API')
+    .setDescription('The Grouche API')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, documentFactory);
 
   await app.listen(3000, '0.0.0.0');
 }
