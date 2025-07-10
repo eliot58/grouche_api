@@ -80,7 +80,7 @@ export class CharityController {
       const user = await tx.user.findUnique({ where: { wallet: req.address } });
 
       if (!user || user.limit < amount) {
-        throw new BadRequestException('Not enough points');
+        throw new BadRequestException('Not enough limit');
       }
 
       await tx.user.update({
