@@ -186,13 +186,15 @@ export class CharityController {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { wallet: req.address },
-        data: {
-          limit: { increment: charity.donation_needed },
-        },
-      });
-
+      if (charity.status !== 'accepted') {
+        await tx.user.update({
+          where: { wallet: req.address },
+          data: {
+            limit: { increment: charity.donation_needed },
+          },
+        });
+      }
+      
       await tx.charity.delete({
         where: { id },
       });
