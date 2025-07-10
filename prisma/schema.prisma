@@ -15,10 +15,10 @@ datasource db {
 }
 
 model User {
-  wallet    String  @id
-  limit     BigInt  @default(0)
+  wallet    String     @id
+  limit     Int        @default(0)
 
-  totalDonated         BigInt   @default(0)
+  totalDonated         Int      @default(0)
   initiativesCreated   Int      @default(0)
   initiativesSupported Int      @default(0) 
   votesParticipated    Int      @default(0) 
@@ -31,8 +31,8 @@ model Charity {
   id                  Int            @id @default(autoincrement())
   title               String
   deadline            DateTime
-  donation_needed     BigInt
-  donation_collected  BigInt         @default(0)
+  donation_needed     Int
+  donation_collected  Int            @default(0)
   donators_count      Int            @default(0)
   images              Json
   description         String
@@ -52,7 +52,7 @@ model DonationHistory {
   username        String
   comment         String?
   crypto_type     String
-  donation_amount BigInt
+  donation_amount Int
   created_at      DateTime  @default(now())
 
   userWallet      String

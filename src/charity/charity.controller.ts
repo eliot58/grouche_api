@@ -74,7 +74,7 @@ export class CharityController {
       }
     }
 
-    const amount = BigInt(dto.amount);
+    const amount = parseInt(dto.amount, 10);
 
     const result = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { wallet: req.address } });
@@ -108,11 +108,7 @@ export class CharityController {
       return charity;
     });
 
-    return {
-      ...result,
-      donation_needed: result.donation_needed.toString(),
-      donation_collected: result.donation_collected.toString(),
-    };
+    return result;
   }
 
   @Get('charity/:id')
@@ -126,11 +122,7 @@ export class CharityController {
       throw new NotFoundException('Charity not found');
     }
 
-    return {
-      ...charity,
-      donation_needed: charity.donation_needed.toString(),
-      donation_collected: charity.donation_collected.toString(),
-    };
+    return charity;
   }
 
   @Get('charities')
@@ -174,11 +166,7 @@ export class CharityController {
       },
     });
 
-    return charities.map((charity) => ({
-      ...charity,
-      donation_needed: charity.donation_needed.toString(),
-      donation_collected: charity.donation_collected.toString(),
-    }));
+    return charities;
   }
 
   @Delete('charity/:id')

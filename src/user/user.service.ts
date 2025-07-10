@@ -17,11 +17,7 @@ export class UserService {
   async getUsers() {
     const users = await this.prisma.user.findMany();
 
-    return users.map((user) => ({
-      ...user,
-      limit: user.limit.toString(),
-      totalDonated: user.totalDonated.toString(),
-    }));
+    return users;
   }
 
   async getUser(address: string) {
@@ -31,11 +27,7 @@ export class UserService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    return {
-      ...user,
-      limit: user.limit.toString(),
-      totalDonated: user.totalDonated.toString(),
-    };
+    return user;
   }
 
   async getUserCharities(address: string, limit: number, offset: number) {
@@ -50,11 +42,7 @@ export class UserService {
       take: limit,
     });
 
-    return charities.map((charity) => ({
-      ...charity,
-      donation_needed: charity.donation_needed.toString(),
-      donation_collected: charity.donation_collected.toString(),
-    }));
+    return charities;
   }
 
   async getInventory(address: string, limit: number, offset: number) {
@@ -73,10 +61,7 @@ export class UserService {
       take: limit,
     });
 
-    return donations.map((donatation) => ({
-      ...donatation,
-      donation_amount: donatation.donation_amount.toString(),
-    }));
+    return donations;
   }
 
   @Cron('0 0 */4 * * *')
