@@ -48,11 +48,7 @@ export class AdminController {
       },
     });
 
-    return charities.map((charity) => ({
-      ...charity,
-      donation_needed: charity.donation_needed.toString(),
-      donation_collected: charity.donation_collected.toString(),
-    }));
+    return charities;
   }
 
   @Patch('charity/:id')
@@ -83,7 +79,7 @@ export class AdminController {
     const { status, address } = body;
 
     const charity = await this.prisma.charity.findUnique({
-      where: { id: Number(id) },
+      where: { id },
     });
 
     if (!charity) {
