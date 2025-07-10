@@ -9,7 +9,7 @@ import {
   Post,
   Query,
   Req,
-  UseGuards,
+  UseGuards
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestWithAuth } from '../auth/auth.types';

@@ -68,6 +68,7 @@ export class UserService {
   async getDonatations(address: string, limit: number, offset: number) {
     const donations = await this.prisma.donationHistory.findMany({
       where: { userWallet: address },
+      include: { charity: true },
       skip: offset,
       take: limit,
     });

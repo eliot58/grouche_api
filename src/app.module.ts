@@ -9,6 +9,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { CharityModule } from './charity/charity.module';
 import { AdminModule } from './admin/admin.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -21,6 +22,12 @@ import { AdminModule } from './admin/admin.module';
     UserModule,
     CharityModule,
     AdminModule,
+    BullModule.forRoot({
+      connection: {
+        host: '127.0.0.1',
+        port: 6379,
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [
