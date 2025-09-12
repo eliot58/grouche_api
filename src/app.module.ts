@@ -10,6 +10,7 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { CharityModule } from './charity/charity.module';
 import { AdminModule } from './admin/admin.module';
 import { BullModule } from '@nestjs/bullmq';
+import { WebhookModule } from './webhook/webhook.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { BullModule } from '@nestjs/bullmq';
         port: 6379,
       },
     }),
+    WebhookModule,
   ],
   controllers: [AppController],
   providers: [
