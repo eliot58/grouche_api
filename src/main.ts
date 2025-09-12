@@ -41,6 +41,7 @@ async function bootstrap() {
   const corsOptions: FastifyCorsOptions = {
     origin: [
       'https://grouche.com',
+      'https://testnet.grouche.com',
       'http://0.0.0.0:3000',
       'http://localhost:3000',
       'http://127.0.0.1:3000',
