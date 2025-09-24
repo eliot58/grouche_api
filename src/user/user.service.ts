@@ -67,9 +67,9 @@ export class UserService {
   @Cron('0 0 */4 * * *')
   async checkBurnAll() {
     this.logger.log('Starting scheduled NFT burn check...');
-    const tonApiKey = this.configService.get<string>('TONAPIKEY');
+    const tonApiKey = this.configService.get<string>('TONAPI_KEY');
     if (!tonApiKey) {
-      this.logger.error('TONAPIKEY is not defined in env');
+      this.logger.error('TONAPI_KEY is not defined in env');
       return;
     }
     const client = new TonApiClient({
