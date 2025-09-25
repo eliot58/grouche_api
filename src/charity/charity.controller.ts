@@ -43,7 +43,7 @@ async function processImageToBuffers(
 
   const thumbPromise = base
     .clone()
-    .resize({ width: 200, height: 120, fit: 'cover', position: 'centre' as any })
+    .resize({ width: 400, height: 240, fit: 'cover', position: 'centre' as any })
     .jpeg({ quality: 70 })
     .toBuffer({ resolveWithObject: true });
 
