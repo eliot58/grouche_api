@@ -20,7 +20,7 @@ export class S3Service {
     this.bucket = process.env.AWS_S3_BUCKET!;
     this.cdnBase =
       process.env.CDN_BASE ||
-      `https://${this.bucket}.s3.us-east-1.amazonaws.com`;
+      `https://${this.bucket}`;
   }
 
   async uploadBuffer(
