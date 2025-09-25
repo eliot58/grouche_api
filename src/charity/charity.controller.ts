@@ -37,15 +37,32 @@ async function processImageToBuffers(
 
   const originalPromise = base
     .clone()
-    .resize({ width: 1024, height: 600, fit: 'inside', withoutEnlargement: true })
-    .jpeg({ quality: 85 })
+    .resize({
+      width: 1024,
+      height: 600,
+      fit: 'cover',
+      position: 'attention',
+      kernel: sharp.kernel.lanczos3,
+    })
+    .withMetadata()
+    .jpeg({ quality: 85, mozjpeg: true, progressive: true, chromaSubsampling: '4:4:4' })
     .toBuffer({ resolveWithObject: true });
 
   const thumbPromise = base
     .clone()
-    .resize({ width: 400, height: 240, fit: 'cover', position: 'centre' as any })
-    .jpeg({ quality: 70 })
+    .resize({
+      width: 400,
+      height: 240,
+      fit: 'cover',
+      position: 'attention',
+      kernel: sharp.kernel.lanczos3,
+      fastShrinkOnLoad: false,
+    })
+    .sharpen({ sigma: 0.4 })
+    .withMetadata()
+    .webp({ quality: 80, smartSubsample: true })
     .toBuffer({ resolveWithObject: true });
+
 
   fileStream.pipe(base);
 
