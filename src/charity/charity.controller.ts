@@ -17,7 +17,7 @@ import { randomUUID } from 'crypto';
 import { basename, extname, join } from 'path';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 
 const UPLOAD_ROOT = '/var/www/grouche/uploads';
 const ORIGINAL_DIR = join(UPLOAD_ROOT, 'charities', 'originals');
