@@ -28,25 +28,22 @@ type ProcessedImage = {
 };
 
 async function processImageToBuffers(
-  filename: string,
   fileStream: NodeJS.ReadableStream,
 ): Promise<{
   original: { buffer: Buffer; info: sharp.OutputInfo; mime: string; ext: string };
   thumb: { buffer: Buffer; info: sharp.OutputInfo; mime: string; ext: string };
 }> {
-  const inExt = extname(filename).toLowerCase();
-
   const base = sharp().rotate();
 
   const originalPromise = base
     .clone()
-    .resize({ width: 1024, height: 800, fit: 'inside', withoutEnlargement: true })
+    .resize({ width: 1024, height: 600, fit: 'inside', withoutEnlargement: true })
     .jpeg({ quality: 85 })
     .toBuffer({ resolveWithObject: true });
 
   const thumbPromise = base
     .clone()
-    .resize({ width: 60, height: 80, fit: 'cover', position: 'centre' as any })
+    .resize({ width: 200, height: 120, fit: 'cover', position: 'centre' as any })
     .jpeg({ quality: 70 })
     .toBuffer({ resolveWithObject: true });
 
@@ -109,7 +106,7 @@ export class CharityController {
         // const absolutePath = join('/var/www/grouche/uploads', filename);
         // await pipeline(part.file, createWriteStream(absolutePath));
 
-        const processed = await processImageToBuffers(part.filename, part.file);
+        const processed = await processImageToBuffers(part.file);
 
         // грузим обе версии в S3
         const [originalUrl, thumbUrl] = await Promise.all([
