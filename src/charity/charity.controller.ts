@@ -44,8 +44,9 @@ async function processImageToBuffers(
       position: 'center',
       kernel: sharp.kernel.lanczos3,
     })
+    .sharpen({ sigma: 0.4 })
     .withMetadata()
-    .jpeg({ quality: 85, mozjpeg: true, progressive: true, chromaSubsampling: '4:4:4' })
+    .webp({ quality: 85, smartSubsample: true, effort: 6 })
     .toBuffer({ resolveWithObject: true });
 
   const thumbPromise = base
@@ -60,7 +61,7 @@ async function processImageToBuffers(
     })
     .sharpen({ sigma: 0.4 })
     .withMetadata()
-    .webp({ quality: 80, smartSubsample: true })
+    .webp({ quality: 85, smartSubsample: true, effort: 6 })
     .toBuffer({ resolveWithObject: true });
 
 
@@ -69,7 +70,7 @@ async function processImageToBuffers(
   const [orig, th] = await Promise.all([originalPromise, thumbPromise]);
 
   return {
-    original: { buffer: orig.data, info: orig.info, mime: 'image/jpeg', ext: '.jpg' },
+    original: { buffer: orig.data, info: orig.info, mime: 'image/webp', ext: '.webp' },
     thumb: { buffer: th.data, info: th.info, mime: 'image/webp', ext: '.webp' }
   };
 }
