@@ -41,7 +41,7 @@ async function processImageToBuffers(
       width: 1024,
       height: 600,
       fit: 'cover',
-      position: 'attention',
+      position: 'center',
       kernel: sharp.kernel.lanczos3,
     })
     .withMetadata()
@@ -54,7 +54,7 @@ async function processImageToBuffers(
       width: 400,
       height: 240,
       fit: 'cover',
-      position: 'attention',
+      position: 'center',
       kernel: sharp.kernel.lanczos3,
       fastShrinkOnLoad: false,
     })
