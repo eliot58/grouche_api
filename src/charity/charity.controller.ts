@@ -14,15 +14,70 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestWithAuth } from '../auth/auth.types';
 import { randomUUID } from 'crypto';
-import { extname, join } from 'path';
-import { createWriteStream } from 'fs';
-import { pipeline } from 'stream/promises';
+import { basename, extname, join } from 'path';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
+import sharp from 'sharp';
+
+const UPLOAD_ROOT = '/var/www/grouche/uploads';
+const ORIGINAL_DIR = join(UPLOAD_ROOT, 'charities', 'originals');
+const THUMB_DIR = join(UPLOAD_ROOT, 'charities', 'thumbs');
+
+async function processImageStream(filename: string, fileStream: NodeJS.ReadableStream) {
+
+  const ext = extname(filename);
+  const base = `${Date.now()}-${randomUUID()}`;
+  const origPathAbs = join(ORIGINAL_DIR, `${base}${ext}`);
+  const thumbPathAbs = join(THUMB_DIR, `${base}-thumb${ext}`);
+
+  // sharp можно кормить потоком и клонировать для нескольких выходов
+  const img = sharp()
+    .rotate(); // учтём EXIF-ориентацию
+
+  const pump = fileStream.pipe(img);
+
+  // оригинал: вписываем в 1024×800, сохраняем пропорции, не увеличиваем
+  const origTask = img
+    .clone()
+    .resize({
+      width: 1024,
+      height: 800,
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .toFile(origPathAbs);
+
+  // превью: ровно 60×80, «обложка» (кадрирование по центру)
+  const thumbTask = img
+    .clone()
+    .resize({
+      width: 60,
+      height: 80,
+      fit: 'cover',
+      position: 'centre',
+      withoutEnlargement: false,
+    })
+    .toFile(thumbPathAbs);
+
+  const [origInfo, thumbInfo] = await Promise.all([origTask, thumbTask]);
+  // дожмём исходный пайп (на случай раннего завершения клонов)
+  if ('then' in pump) pump;
+
+  // относительные пути для API/клиента
+  const origPathRel = `/uploads/charities/originals/${basename(origPathAbs)}`;
+  const thumbPathRel = `/uploads/charities/thumbs/${basename(thumbPathAbs)}`;
+
+  return {
+    original: origPathRel,
+    thumb: thumbPathRel,
+    original_size: [origInfo.width, origInfo.height],
+    thumb_size: [thumbInfo.width, thumbInfo.height],
+  };
+}
 
 @Controller()
 export class CharityController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   @Post('charity')
   @ApiBearerAuth()
@@ -61,14 +116,16 @@ export class CharityController {
   async create(@Req() req: RequestWithAuth) {
     const parts = req.parts();
     const dto: Record<string, any> = {};
-    const imagePaths: string[] = [];
+    const images: Array<{ original: string; thumb: string; original_size: number[]; thumb_size: number[] }> = [];
 
     for await (const part of parts) {
       if (part.type === 'file') {
-        const filename = `${Date.now()}-${randomUUID()}${extname(part.filename)}`;
-        const absolutePath = join('/var/www/grouche/uploads', filename);
-        await pipeline(part.file, createWriteStream(absolutePath));
-        imagePaths.push(`/uploads/${filename}`);
+        // const filename = `${Date.now()}-${randomUUID()}${extname(part.filename)}`;
+        // const absolutePath = join('/var/www/grouche/uploads', filename);
+        // await pipeline(part.file, createWriteStream(absolutePath));
+
+        const processed = await processImageStream(part.filename, part.file);
+        images.push(processed);
       } else {
         dto[part.fieldname] = part.value;
       }
@@ -95,7 +152,7 @@ export class CharityController {
         data: {
           title: dto.title,
           description: dto.description,
-          images: imagePaths,
+          images,
           deadline: new Date(dto.deadline),
           donation_needed: amount,
           contact: dto.contact,
@@ -194,7 +251,7 @@ export class CharityController {
           },
         });
       }
-      
+
       await tx.charity.delete({
         where: { id },
       });
