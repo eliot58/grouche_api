@@ -70,7 +70,7 @@ async function processImageToBuffers(
 
   return {
     original: { buffer: orig.data, info: orig.info, mime: 'image/jpeg', ext: '.jpg' },
-    thumb: { buffer: th.data, info: th.info, mime: 'image/jpeg', ext: '.jpg' },
+    thumb: { buffer: th.data, info: th.info, mime: 'image/webp', ext: '.webp' }
   };
 }
 
