@@ -9,6 +9,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { CharityModule } from './charity/charity.module';
 import { AdminModule } from './admin/admin.module';
+import { S3Module } from './s3/s3.module';
 @Module({
   imports: [
     SentryModule.forRoot(),
@@ -19,7 +20,8 @@ import { AdminModule } from './admin/admin.module';
     AuthModule,
     UserModule,
     CharityModule,
-    AdminModule
+    AdminModule,
+    S3Module
   ],
   controllers: [AppController],
   providers: [

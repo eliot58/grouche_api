@@ -18,66 +18,51 @@ import { basename, extname, join } from 'path';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import * as sharp from 'sharp';
+import { S3Service } from 'src/s3/s3.service';
 
-const UPLOAD_ROOT = '/var/www/grouche/uploads';
-const ORIGINAL_DIR = join(UPLOAD_ROOT, 'charities', 'originals');
-const THUMB_DIR = join(UPLOAD_ROOT, 'charities', 'thumbs');
+type ProcessedImage = {
+  originalUrl: string;
+  thumbUrl: string;
+  original_size: [number, number];
+  thumb_size: [number, number];
+};
 
-async function processImageStream(filename: string, fileStream: NodeJS.ReadableStream) {
+async function processImageToBuffers(
+  filename: string,
+  fileStream: NodeJS.ReadableStream,
+): Promise<{
+  original: { buffer: Buffer; info: sharp.OutputInfo; mime: string; ext: string };
+  thumb: { buffer: Buffer; info: sharp.OutputInfo; mime: string; ext: string };
+}> {
+  const inExt = extname(filename).toLowerCase();
 
-  const ext = extname(filename);
-  const base = `${Date.now()}-${randomUUID()}`;
-  const origPathAbs = join(ORIGINAL_DIR, `${base}${ext}`);
-  const thumbPathAbs = join(THUMB_DIR, `${base}-thumb${ext}`);
+  const base = sharp().rotate();
 
-  // sharp можно кормить потоком и клонировать для нескольких выходов
-  const img = sharp()
-    .rotate(); // учтём EXIF-ориентацию
-
-  const pump = fileStream.pipe(img);
-
-  // оригинал: вписываем в 1024×800, сохраняем пропорции, не увеличиваем
-  const origTask = img
+  const originalPromise = base
     .clone()
-    .resize({
-      width: 1024,
-      height: 800,
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .toFile(origPathAbs);
+    .resize({ width: 1024, height: 800, fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 85 })
+    .toBuffer({ resolveWithObject: true });
 
-  // превью: ровно 60×80, «обложка» (кадрирование по центру)
-  const thumbTask = img
+  const thumbPromise = base
     .clone()
-    .resize({
-      width: 60,
-      height: 80,
-      fit: 'cover',
-      position: 'centre',
-      withoutEnlargement: false,
-    })
-    .toFile(thumbPathAbs);
+    .resize({ width: 60, height: 80, fit: 'cover', position: 'centre' as any })
+    .jpeg({ quality: 70 })
+    .toBuffer({ resolveWithObject: true });
 
-  const [origInfo, thumbInfo] = await Promise.all([origTask, thumbTask]);
-  // дожмём исходный пайп (на случай раннего завершения клонов)
-  if ('then' in pump) pump;
+  fileStream.pipe(base);
 
-  // относительные пути для API/клиента
-  const origPathRel = `/uploads/charities/originals/${basename(origPathAbs)}`;
-  const thumbPathRel = `/uploads/charities/thumbs/${basename(thumbPathAbs)}`;
+  const [orig, th] = await Promise.all([originalPromise, thumbPromise]);
 
   return {
-    original: origPathRel,
-    thumb: thumbPathRel,
-    original_size: [origInfo.width, origInfo.height],
-    thumb_size: [thumbInfo.width, thumbInfo.height],
+    original: { buffer: orig.data, info: orig.info, mime: 'image/jpeg', ext: '.jpg' },
+    thumb: { buffer: th.data, info: th.info, mime: 'image/jpeg', ext: '.jpg' },
   };
 }
 
 @Controller()
 export class CharityController {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService, private readonly s3: S3Service) { }
 
   @Post('charity')
   @ApiBearerAuth()
@@ -116,7 +101,7 @@ export class CharityController {
   async create(@Req() req: RequestWithAuth) {
     const parts = req.parts();
     const dto: Record<string, any> = {};
-    const images: Array<{ original: string; thumb: string; original_size: number[]; thumb_size: number[] }> = [];
+    const images: ProcessedImage[] = [];
 
     for await (const part of parts) {
       if (part.type === 'file') {
@@ -124,8 +109,30 @@ export class CharityController {
         // const absolutePath = join('/var/www/grouche/uploads', filename);
         // await pipeline(part.file, createWriteStream(absolutePath));
 
-        const processed = await processImageStream(part.filename, part.file);
-        images.push(processed);
+        const processed = await processImageToBuffers(part.filename, part.file);
+
+        // грузим обе версии в S3
+        const [originalUrl, thumbUrl] = await Promise.all([
+          this.s3.uploadBuffer(
+            processed.original.buffer,
+            processed.original.mime,
+            'charities/originals',
+            processed.original.ext,
+          ),
+          this.s3.uploadBuffer(
+            processed.thumb.buffer,
+            processed.thumb.mime,
+            'charities/thumbs',
+            processed.thumb.ext,
+          ),
+        ]);
+
+        images.push({
+          originalUrl,
+          thumbUrl,
+          original_size: [processed.original.info.width!, processed.original.info.height!],
+          thumb_size: [processed.thumb.info.width!, processed.thumb.info.height!],
+        });
       } else {
         dto[part.fieldname] = part.value;
       }

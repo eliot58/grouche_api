@@ -26,11 +26,6 @@ async function bootstrap() {
     },
   });
 
-  await app.register(fastifyStatic, {
-    root: '/var/www/grouche/uploads',
-    prefix: '/uploads/',
-  });
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
