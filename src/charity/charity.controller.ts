@@ -13,8 +13,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestWithAuth } from '../auth/auth.types';
-import { randomUUID } from 'crypto';
-import { basename, extname, join } from 'path';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import * as sharp from 'sharp';
