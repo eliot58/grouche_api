@@ -12,23 +12,16 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { AdminGuard } from '../auth/jwt-auth.guard';
+import { VOTING_EXP } from '../constants/config';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   @Get('charities')
   @ApiBearerAuth()
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'offset',
-    required: false,
-    type: Number,
-  })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
   @UseGuards(AdminGuard)
   async findAll(
     @Query('limit') limit?: string,
@@ -37,19 +30,21 @@ export class AdminController {
     const take = limit ? parseInt(limit, 10) : 8;
     const skip = offset ? parseInt(offset, 10) : 0;
 
+    const cutoff = new Date(Date.now() - VOTING_EXP);
+
     const charities = await this.prisma.charity.findMany({
       where: {
         status: 'in_review',
+        created_at: { lte: cutoff },
       },
       skip,
       take,
-      orderBy: {
-        created_at: 'desc',
-      },
+      orderBy: { created_at: 'desc' },
     });
 
     return charities;
   }
+
 
   @Patch('charity/:id')
   @ApiBearerAuth()
@@ -108,14 +103,7 @@ export class AdminController {
       await this.prisma.$transaction(async (tx) => {
         await tx.charity.update({
           where: { id },
-          data: { status: 'rejected' },
-        });
-
-        await tx.user.update({
-          where: { wallet: charity.authorWallet },
-          data: {
-            limit: { increment: charity.donation_needed },
-          },
+          data: { status: 'rejected', rejectedDate: new Date() },
         });
       });
     } else {

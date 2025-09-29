@@ -1,9 +1,11 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Delete,
   ForbiddenException,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Post,
@@ -16,7 +18,10 @@ import { RequestWithAuth } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import * as sharp from 'sharp';
-import { S3Service } from 'src/s3/s3.service';
+import { S3Service } from '../s3/s3.service';
+import { VoteChoice } from '../../generated/prisma';
+import { TonApiClient } from '@ton-api/client';
+import { VOTING_EXP } from '../constants/config';
 
 type ProcessedImage = {
   originalUrl: string;
@@ -75,7 +80,11 @@ async function processImageToBuffers(
 
 @Controller()
 export class CharityController {
-  constructor(private readonly prisma: PrismaService, private readonly s3: S3Service) { }
+  constructor(
+    private readonly prisma: PrismaService, 
+    private readonly s3: S3Service,
+    @Inject("TONAPI_CLIENT") private readonly tonapi: TonApiClient
+  ) { }
 
   @Post('charity')
   @ApiBearerAuth()
@@ -195,12 +204,44 @@ export class CharityController {
       include: { history: true },
     });
 
-    if (!charity) {
-      throw new NotFoundException('Charity not found');
-    }
+    if (!charity) throw new NotFoundException('Charity not found');
 
     return charity;
   }
+
+  @Get('charities/in-review')
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  async findInReviewRecent(
+    @Query('search') search?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const take = limit ? parseInt(limit, 10) : 8;
+    const skip = offset ? parseInt(offset, 10) : 0;
+
+    const since = new Date(Date.now() - VOTING_EXP);
+
+    const charities = await this.prisma.charity.findMany({
+      where: {
+        status: 'in_review',
+        created_at: { gte: since },
+        ...(search && {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        }),
+      },
+      skip,
+      take,
+      orderBy: { created_at: 'desc' },
+    });
+
+    return charities;
+  }
+
 
   @Get('charities')
   @ApiQuery({
@@ -279,4 +320,76 @@ export class CharityController {
 
     return { message: 'Charity deleted and funds returned to user' };
   }
+
+  @Post('charity/:id/vote')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { choice: { type: 'string', enum: ['yes', 'no'] } },
+      required: ['choice'],
+    },
+  })
+  async vote(
+    @Param('id') id: number,
+    @Req() req: RequestWithAuth,
+    @Body('choice') choice: VoteChoice,
+  ) {
+    if (choice !== 'yes' && choice !== 'no') {
+      throw new BadRequestException('choice must be "yes" or "no"');
+    }
+
+    const charity = await this.prisma.charity.findUnique({ where: { id } });
+    if (!charity) throw new NotFoundException('Charity not found');
+
+    if (charity.status !== 'in_review') {
+      throw new BadRequestException('Voting is allowed only while charity is in_review');
+    }
+
+    const expireDate = new Date(charity.created_at.getTime() + VOTING_EXP);
+    if (new Date() > expireDate) {
+      throw new BadRequestException('Voting period has expired');
+    }
+
+    // const balance = await this.tonapi.accounts.getAccountJettonBalance(Address.parse(req.address), Address.parse("EQAu7qxfVgMg0tpnosBpARYOG--W1EUuX_5H_vOQtTVuHnrn"))
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const prev = await tx.vote.findUnique({
+        where: { charityId_userWallet: { charityId: charity.id, userWallet: req.address } },
+      });
+
+      if (!prev) {
+        await tx.vote.create({
+          data: { charityId: charity.id, userWallet: req.address, choice },
+        });
+        await tx.charity.update({
+          where: { id: charity.id },
+          data: choice === 'yes' ? { votes_yes: { increment: 1 } } : { votes_no: { increment: 1 } },
+        });
+        return { changed: true, action: 'created', choice };
+      }
+
+      if (prev.choice === choice) {
+        return { changed: false, action: 'noop', choice };
+      }
+
+      await tx.vote.update({
+        where: { charityId_userWallet: { charityId: charity.id, userWallet: req.address } },
+        data: { choice },
+      });
+      await tx.charity.update({
+        where: { id: charity.id },
+        data:
+          choice === 'yes'
+            ? { votes_yes: { increment: 1 }, votes_no: { decrement: 1 } }
+            : { votes_no: { increment: 1 }, votes_yes: { decrement: 1 } },
+      });
+
+      return { changed: true, action: 'switched', choice };
+    });
+
+    return { message: 'Vote processed', ...result };
+  }
+
 }

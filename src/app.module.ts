@@ -10,12 +10,15 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { CharityModule } from './charity/charity.module';
 import { AdminModule } from './admin/admin.module';
 import { S3Module } from './s3/s3.module';
+import { TonApiCoreModule } from './tonapi/tonapi.module';
+
 @Module({
   imports: [
     SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    TonApiCoreModule.forRootAsync(),
     ScheduleModule.forRoot(),
     AuthModule,
     UserModule,

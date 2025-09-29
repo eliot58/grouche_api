@@ -24,7 +24,8 @@ model User {
   votesParticipated    Int      @default(0) 
 
   charities Charity[]
-  donations DonationHistory[] 
+  donations DonationHistory[]
+  votes     Vote[]
 }
 
 model Charity {
@@ -41,10 +42,35 @@ model Charity {
   status              CharityStatus  @default(in_review)
   created_at          DateTime       @default(now())
 
+  rejectedDate        DateTime?
+
   authorWallet        String
   author              User           @relation(fields: [authorWallet], references: [wallet])
 
   history             DonationHistory[] 
+
+  votes               Vote[]
+  votes_yes           Int            @default(0)
+  votes_no            Int            @default(0)
+}
+
+model Vote {
+  charityId   Int
+  userWallet  String
+  choice      VoteChoice
+  created_at  DateTime @default(now())
+
+  charity     Charity @relation(fields: [charityId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userWallet], references: [wallet], onDelete: Cascade)
+
+  @@id([charityId, userWallet])
+  @@index([userWallet])
+  @@index([charityId, choice])
+}
+
+enum VoteChoice {
+  yes
+  no
 }
 
 model DonationHistory {

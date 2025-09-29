@@ -36,14 +36,4 @@ export class TonApiService {
       'hex',
     );
   }
-
-  public async getAccountInfo(
-    address: string,
-  ): Promise<ReturnType<TonClient4['getAccount']>> {
-    const masterAt = await this.client.getLastBlock();
-    return await this.client.getAccount(
-      masterAt.last.seqno,
-      Address.parse(address),
-    );
-  }
 }

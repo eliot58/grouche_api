@@ -1,6 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
 import { TonApiClient } from '@ton-api/client';
 import { Address } from '@ton/core';
 import { Cron } from '@nestjs/schedule';
@@ -11,8 +10,8 @@ export class UserService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-  ) {}
+    @Inject("TONAPI_CLIENT") private readonly tonapi: TonApiClient
+  ) { }
 
   async getUsers() {
     const users = await this.prisma.user.findMany();
@@ -23,11 +22,43 @@ export class UserService {
   async getUser(address: string) {
     const user = await this.prisma.user.findUnique({
       where: { wallet: address },
+      select: {
+        totalDonated: true,
+        initiativesCreated: true,
+        initiativesSupported: true,
+        votesParticipated: true,
+        limit: true
+      }
     });
 
     if (!user) throw new NotFoundException('User not found');
 
-    return user;
+    const balance = await this.tonapi.accounts.getAccountJettonBalance(Address.parse(address), Address.parse("EQAu7qxfVgMg0tpnosBpARYOG--W1EUuX_5H_vOQtTVuHnrn"))
+
+    return {
+      ...user,
+      balance
+    };
+  }
+
+  async getOtherUser(address: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { wallet: address },
+      select: {
+        totalDonated: true,
+        initiativesCreated: true,
+        initiativesSupported: true,
+        votesParticipated: true
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const balance = await this.tonapi.accounts.getAccountJettonBalance(
+      Address.parse(address),
+      Address.parse('EQAu7qxfVgMg0tpnosBpARYOG--W1EUuX_5H_vOQtTVuHnrn'),
+    );
+
+    return { ...user, balance };
   }
 
   async getUserCharities(address: string, limit: number, offset: number) {
@@ -67,16 +98,6 @@ export class UserService {
   @Cron('0 0 */4 * * *')
   async checkBurnAll() {
     this.logger.log('Starting scheduled NFT burn check...');
-    const tonApiKey = this.configService.get<string>('TONAPI_KEY');
-    if (!tonApiKey) {
-      this.logger.error('TONAPI_KEY is not defined in env');
-      return;
-    }
-    const client = new TonApiClient({
-      baseUrl: 'https://tonapi.io',
-      apiKey: tonApiKey,
-    });
-
     const uncheckedItems = await this.prisma.nftItems.findMany({
       where: { is_checked: false },
     });
@@ -92,7 +113,7 @@ export class UserService {
         });
         this.logger.log(`Checking NFT item ${bounceNftAddress}`);
 
-        const history = await client.nft.getNftHistoryById(
+        const history = await this.tonapi.nft.getNftHistoryById(
           Address.parse(nftItem.address),
           { limit: 10 },
           {},
@@ -105,7 +126,7 @@ export class UserService {
           continue;
         }
 
-        const event = await client.events.getEvent(eventId);
+        const event = await this.tonapi.events.getEvent(eventId);
         const action = event.actions[0]?.NftItemTransfer;
         if (!action) {
           this.logger.warn(
