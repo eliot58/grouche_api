@@ -213,6 +213,8 @@ export class CharityController {
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   async findInReviewRecent(
     @Query('search') search?: string,
     @Query('limit') limit?: string,
