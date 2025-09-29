@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TonApiClient } from '@ton-api/client';
 import { Address } from '@ton/core';
 import { Cron } from '@nestjs/schedule';
+import { GRC_MASTER } from '../constants/config';
 
 @Injectable()
 export class UserService {
@@ -12,6 +13,23 @@ export class UserService {
     private readonly prisma: PrismaService,
     @Inject("TONAPI_CLIENT") private readonly tonapi: TonApiClient
   ) { }
+
+  private async getJettonBalanceOrZero(userAddr: string, jettonMinterAddr: string): Promise<bigint> {
+    try {
+      const res = await this.tonapi.accounts.getAccountJettonBalance(
+        Address.parse(userAddr),
+        Address.parse(jettonMinterAddr),
+      );
+      return res.balance;
+    } catch (e: any) {
+      const status = e?.status ?? e?.response?.status;
+      const msg: string = e?.message ?? e?.response?.data?.error ?? '';
+      if (status === 404 || /has no jetton wallet/i.test(msg)) {
+        return 0n;
+      }
+      throw e;
+    }
+  }
 
   async getUsers() {
     const users = await this.prisma.user.findMany();
@@ -33,11 +51,11 @@ export class UserService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    const balance = await this.tonapi.accounts.getAccountJettonBalance(Address.parse(address), Address.parse("EQAu7qxfVgMg0tpnosBpARYOG--W1EUuX_5H_vOQtTVuHnrn"))
+    const balance = await this.getJettonBalanceOrZero(address, GRC_MASTER);
 
     return {
       ...user,
-      balance
+      balance: balance.toString()
     };
   }
 
@@ -53,12 +71,9 @@ export class UserService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const balance = await this.tonapi.accounts.getAccountJettonBalance(
-      Address.parse(address),
-      Address.parse('EQAu7qxfVgMg0tpnosBpARYOG--W1EUuX_5H_vOQtTVuHnrn'),
-    );
+    const balance = await this.getJettonBalanceOrZero(address, GRC_MASTER);
 
-    return { ...user, balance };
+    return { ...user, balance: balance.toString() };
   }
 
   async getUserCharities(address: string, limit: number, offset: number) {
