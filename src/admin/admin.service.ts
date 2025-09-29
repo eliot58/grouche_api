@@ -11,7 +11,7 @@ export class AdminService {
         private readonly prisma: PrismaService
     ) { }
 
-    @Cron(CronExpression.EVERY_DAY_AT_3AM)
+    @Cron(CronExpression.EVERY_5_MINUTES)
     async refundRejectedCharities() {
         this.logger.log('Refund job started');
 
