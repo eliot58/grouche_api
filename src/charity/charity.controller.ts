@@ -217,12 +217,9 @@ export class CharityController {
   @UseGuards(JwtAuthGuard)
   async findInReviewRecent(
     @Query('search') search?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit') limit: number = 10,
+    @Query('offset') offset: number = 0,
   ) {
-    const take = limit ? parseInt(limit, 10) : 8;
-    const skip = offset ? parseInt(offset, 10) : 0;
-
     const since = new Date(Date.now() - VOTING_EXP);
 
     const charities = await this.prisma.charity.findMany({
@@ -236,8 +233,8 @@ export class CharityController {
           },
         }),
       },
-      skip,
-      take,
+      skip: offset,
+      take: limit,
       orderBy: { created_at: 'desc' },
     });
 
@@ -279,12 +276,9 @@ export class CharityController {
   })
   async findAll(
     @Query('search') search?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit') limit: number = 10,
+    @Query('offset') offset: number = 0,
   ) {
-    const take = limit ? parseInt(limit, 10) : 8;
-    const skip = offset ? parseInt(offset, 10) : 0;
-
     const charities = await this.prisma.charity.findMany({
       where: {
         status: 'accepted',
@@ -295,8 +289,8 @@ export class CharityController {
           },
         }),
       },
-      skip,
-      take,
+      skip: offset,
+      take: limit,
       orderBy: {
         created_at: 'desc',
       },

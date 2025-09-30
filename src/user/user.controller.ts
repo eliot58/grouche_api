@@ -40,12 +40,10 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   async getUserCharities(
     @Req() request: RequestWithAuth,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit') limit: number = 10,
+    @Query('offset') offset: number = 0,
   ) {
-    const take = limit ? parseInt(limit, 10) : 8;
-    const skip = offset ? parseInt(offset, 10) : 0;
-    return await this.userService.getUserCharities(request.address, take, skip);
+    return await this.userService.getUserCharities(request.address, limit, offset);
   }
 
   @Get('user/inventory')
@@ -63,12 +61,10 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   async getInventory(
     @Req() request: RequestWithAuth,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit') limit: number = 10,
+    @Query('offset') offset: number = 0,
   ) {
-    const take = limit ? parseInt(limit, 10) : 8;
-    const skip = offset ? parseInt(offset, 10) : 0;
-    return await this.userService.getInventory(request.address, take, skip);
+    return await this.userService.getInventory(request.address, limit, offset);
   }
 
   @Get('user/donatations')
@@ -86,11 +82,9 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   async getDonatations(
     @Req() request: RequestWithAuth,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit') limit: number = 10,
+    @Query('offset') offset: number = 0,
   ) {
-    const take = limit ? parseInt(limit, 10) : 8;
-    const skip = offset ? parseInt(offset, 10) : 0;
-    return await this.userService.getDonatations(request.address, take, skip);
+    return await this.userService.getDonatations(request.address, limit, offset);
   }
 }

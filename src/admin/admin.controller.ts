@@ -24,12 +24,9 @@ export class AdminController {
   @ApiQuery({ name: 'offset', required: false, type: Number })
   @UseGuards(AdminGuard)
   async findAll(
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit') limit: number = 10,
+    @Query('offset') offset: number = 0,
   ) {
-    const take = limit ? parseInt(limit, 10) : 8;
-    const skip = offset ? parseInt(offset, 10) : 0;
-
     const cutoff = new Date(Date.now() - VOTING_EXP);
 
     const charities = await this.prisma.charity.findMany({
@@ -37,8 +34,8 @@ export class AdminController {
         status: 'in_review',
         created_at: { lte: cutoff },
       },
-      skip,
-      take,
+      skip: offset,
+      take: limit,
       orderBy: { created_at: 'desc' },
     });
 
