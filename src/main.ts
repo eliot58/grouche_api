@@ -37,6 +37,7 @@ async function bootstrap() {
     origin: [
       'https://grouche.com',
       'https://testnet.grouche.com',
+      'https://miniapp.grouche.com',
       'http://0.0.0.0:3000',
       'http://localhost:3000',
       'http://127.0.0.1:3000',
