@@ -40,6 +40,7 @@ async function bootstrap() {
       'https://testnet.grouche.com',
       'https://miniapp.grouche.com',
       'https://dev.grouche.com',
+      'http://dev.grouche.com:3000',
       'http://0.0.0.0:3000',
       'http://localhost:3000',
       'http://127.0.0.1:3000',
