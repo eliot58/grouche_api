@@ -11,8 +11,18 @@ export class AuthController {
   async getToken(
     @Query('address') address: string,
     @Query('network') network: CHAIN,
+    @Res() res: FastifyReply
   ) {
-    return await this.authService.generateAuthToken(address, network);
+    const token = await this.authService.generateAuthToken(address, network);
+
+    res.setCookie('auth_token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.send({ token });
   }
 
   @HttpCode(200)
