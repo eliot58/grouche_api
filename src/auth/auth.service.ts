@@ -29,7 +29,7 @@ export class AuthService {
     network: CHAIN,
   ): Promise<string> {
     const payload: AuthToken = { address, network };
-    return this.generateToken(payload, '1y');
+    return this.generateToken(payload, '7d');
   }
 
   public async generatePayloadToken(randomBytes: string): Promise<string> {
