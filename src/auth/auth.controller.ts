@@ -37,9 +37,11 @@ export class AuthController {
     const { token } = await this.authService.checkProof(data);
 
     res.setCookie('auth_token', token, {
+      path: "/",
+      domain: ".grouche.com", 
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      sameSite: "none",     
+      secure: true,  
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
