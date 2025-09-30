@@ -37,7 +37,6 @@ export class AuthController {
     const { token } = await this.authService.checkProof(data);
 
     res.setCookie('auth_token', token, {
-      path: "/",
       httpOnly: true,
       sameSite: "lax",     
       secure: false,  
