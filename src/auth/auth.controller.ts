@@ -38,10 +38,9 @@ export class AuthController {
 
     res.setCookie('auth_token', token, {
       path: "/",
-      domain: ".grouche.com", 
       httpOnly: true,
-      sameSite: "none",     
-      secure: true,  
+      sameSite: "lax",     
+      secure: false,  
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
