@@ -38,7 +38,7 @@ export class AuthController {
 
     res.setCookie('auth_token', token, {
       path: "/",
-      httpOnly: true,
+      httpOnly: false,
       secure: false,  
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
