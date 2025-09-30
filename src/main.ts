@@ -8,7 +8,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyCorsOptions } from '@fastify/cors';
 import fastifyMultipart from '@fastify/multipart';
-import fastifyStatic from '@fastify/static';
+import fastifyCookie from '@fastify/cookie';
 import './instrument';
 
 async function bootstrap() {
@@ -25,6 +25,7 @@ async function bootstrap() {
       fileSize: 200 * 1024 * 1024,
     },
   });
+  app.register(fastifyCookie);
 
   app.useGlobalPipes(
     new ValidationPipe({
