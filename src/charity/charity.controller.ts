@@ -245,9 +245,11 @@ export class CharityController {
   }
 
   @Get('charity/in-review/:id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   async getCharityReview(@Param('id') id: number) {
     const since = new Date(Date.now() - VOTING_EXP);
-    
+
     const charity = await this.prisma.charity.findUnique({
       where: { id, status: "in_review", created_at: { gte: since }},
       include: { history: true },
