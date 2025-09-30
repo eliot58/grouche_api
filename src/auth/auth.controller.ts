@@ -48,4 +48,13 @@ export class AuthController {
 
     return res.send({ token });
   }
+
+  @HttpCode(200)
+  @Post('logout')
+  async logout(@Res() res: FastifyReply) {
+
+    res.clearCookie('auth_token');
+
+    return res.send({ ok: true });
+  }
 }
