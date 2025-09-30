@@ -200,7 +200,7 @@ export class CharityController {
   @Get('charity/:id')
   async getCharity(@Param('id') id: number) {
     const charity = await this.prisma.charity.findUnique({
-      where: { id },
+      where: { id, status: "accepted" },
       include: { history: true },
     });
 
@@ -242,6 +242,20 @@ export class CharityController {
     });
 
     return charities;
+  }
+
+  @Get('charity/in-review/:id')
+  async getCharityReview(@Param('id') id: number) {
+    const since = new Date(Date.now() - VOTING_EXP);
+    
+    const charity = await this.prisma.charity.findUnique({
+      where: { id, status: "in_review", created_at: { gte: since }},
+      include: { history: true },
+    });
+
+    if (!charity) throw new NotFoundException('Charity not found');
+
+    return charity;
   }
 
 
