@@ -38,8 +38,8 @@ export class AuthController {
 
     res.setCookie('auth_token', token, {
       path: "/",
-      // domain: ".grouche.com",
-      domain: "localhost",
+      domain: ".grouche.com",
+      // domain: "localhost",
       httpOnly: true,
       secure: true,  
       sameSite: "none",
