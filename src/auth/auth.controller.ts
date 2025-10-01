@@ -39,10 +39,9 @@ export class AuthController {
     res.setCookie('auth_token', token, {
       path: "/",
       domain: ".grouche.com",
-      // domain: "localhost",
       httpOnly: true,
       secure: true,  
-      sameSite: "none",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60,
     });
 
@@ -52,12 +51,12 @@ export class AuthController {
   @HttpCode(200)
   @Post('logout')
   async logout(@Res() res: FastifyReply) {
-    
     res.clearCookie('auth_token', {
       path: '/',
       domain: '.grouche.com',
+      httpOnly: true,
       secure: true,
-      sameSite: 'none',
+      sameSite: 'lax',
     });
 
     return res.send({ ok: true });
