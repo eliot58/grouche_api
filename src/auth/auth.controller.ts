@@ -52,8 +52,13 @@ export class AuthController {
   @HttpCode(200)
   @Post('logout')
   async logout(@Res() res: FastifyReply) {
-
-    res.clearCookie('auth_token');
+    
+    res.clearCookie('auth_token', {
+      path: '/',
+      domain: '.grouche.com',
+      secure: true,
+      sameSite: 'none',
+    });
 
     return res.send({ ok: true });
   }
