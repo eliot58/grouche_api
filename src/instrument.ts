@@ -6,4 +6,5 @@ const configService = new ConfigService();
 Sentry.init({
   dsn: configService.get<string>('SENTRY_DSN'),
   sendDefaultPii: true,
+  serverName: process.env.NODE_ENV!
 });

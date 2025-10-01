@@ -40,8 +40,8 @@ export class AuthController {
       path: "/",
       domain: ".grouche.com",
       httpOnly: true,
-      secure: true,  
-      sameSite: "lax",
+      secure: false,  
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60,
     });
 
@@ -55,8 +55,8 @@ export class AuthController {
       path: '/',
       domain: '.grouche.com',
       httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
+      secure: false,
+      sameSite: 'none',
     });
 
     return res.send({ ok: true });
