@@ -16,7 +16,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestWithAuth } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiQuery, ApiSecurity } from '@nestjs/swagger';
 import * as sharp from 'sharp';
 import { S3Service } from '../s3/s3.service';
 import { VoteChoice } from '../../generated/prisma';
@@ -87,7 +87,7 @@ export class CharityController {
   ) { }
 
   @Post('charity')
-  @ApiBearerAuth()
+  @ApiSecurity('cookie')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Charity creation payload',
@@ -213,7 +213,7 @@ export class CharityController {
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
-  @ApiBearerAuth()
+  @ApiSecurity('cookie')
   @UseGuards(JwtAuthGuard)
   async findInReviewRecent(
     @Query('search') search?: string,
@@ -242,7 +242,7 @@ export class CharityController {
   }
 
   @Get('charity/in-review/:id')
-  @ApiBearerAuth()
+  @ApiSecurity('cookie')
   @UseGuards(JwtAuthGuard)
   async getCharityReview(@Param('id') id: number) {
     const since = new Date(Date.now() - VOTING_EXP);
@@ -300,7 +300,7 @@ export class CharityController {
   }
 
   @Delete('charity/:id')
-  @ApiBearerAuth()
+  @ApiSecurity('cookie')
   @UseGuards(JwtAuthGuard)
   async deleteCharity(@Param('id') id: number, @Req() req: RequestWithAuth) {
     const charity = await this.prisma.charity.findUnique({
@@ -334,7 +334,7 @@ export class CharityController {
   }
 
   @Post('charity/:id/vote')
-  @ApiBearerAuth()
+  @ApiSecurity('cookie')
   @UseGuards(JwtAuthGuard)
   @ApiBody({
     schema: {

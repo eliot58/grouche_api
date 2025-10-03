@@ -15,7 +15,7 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: RequestWithAuth = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
+    const token = request.cookies['auth_token'];
 
     if (!token) throw new UnauthorizedException('No token provided');
 
