@@ -16,10 +16,12 @@ export class AuthController {
     const token = await this.authService.generateAuthToken(address, network);
 
     res.setCookie('auth_token', token, {
+      path: "/",
+      domain: ".grouche.com",
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: true,  
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
     });
 
     return res.send({ token });
