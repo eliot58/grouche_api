@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { RequestWithAuth } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserService } from './user.service';
-import { ApiSecurity, ApiQuery } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiQuery } from '@nestjs/swagger';
 
 @Controller()
 export class UserController {
@@ -14,7 +14,7 @@ export class UserController {
   }
 
   @Get('user')
-  @ApiSecurity('cookie')
+  @ApiCookieAuth('auth_token') 
   @UseGuards(JwtAuthGuard)
   async getUser(@Req() request: RequestWithAuth) {
     return await this.userService.getUser(request.address);
@@ -26,7 +26,7 @@ export class UserController {
   }
 
   @Get('user/charities')
-  @ApiSecurity('cookie')
+  @ApiCookieAuth('auth_token') 
   @ApiQuery({
     name: 'limit',
     required: false,
@@ -47,7 +47,7 @@ export class UserController {
   }
 
   @Get('user/inventory')
-  @ApiSecurity('cookie')
+  @ApiCookieAuth('auth_token')
   @ApiQuery({
     name: 'limit',
     required: false,
@@ -68,7 +68,7 @@ export class UserController {
   }
 
   @Get('user/donatations')
-  @ApiSecurity('cookie')
+  @ApiCookieAuth('auth_token')
   @ApiQuery({
     name: 'limit',
     required: false,

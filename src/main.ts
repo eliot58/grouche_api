@@ -61,9 +61,19 @@ async function bootstrap() {
     .setDescription('The Grouche API')
     .setVersion('1.0')
     .addBearerAuth()
+    .addCookieAuth('auth_token', {
+      type: 'apiKey',
+      in: 'cookie',
+    })
     .build();
+    
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, documentFactory);
+  SwaggerModule.setup('docs', app, documentFactory, {
+    swaggerOptions: {
+      withCredentials: true,
+      persistAuthorization: true
+    },
+  });
 
   await app.listen(3000, '0.0.0.0');
 }
